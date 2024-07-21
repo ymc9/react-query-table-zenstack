@@ -1,0 +1,85 @@
+datasource db {
+    provider = 'postgresql'
+    url      = env('DATABASE_URL')
+}
+
+generator client {
+    provider = 'prisma-client-js'
+}
+
+plugin hooks {
+    provider = '@zenstackhq/tanstack-query'
+    target = 'react'
+    output = 'src/hooks'
+}
+
+model Category {
+    id          Int       @id @map('category_id') @db.SmallInt
+    name        String    @map('category_name') @db.VarChar(15)
+    description String?
+    products    Product[]
+
+    @@map('categories')
+}
+
+model Customer {
+    id           String  @id @map('customer_id') @db.Char(100)
+    name         String  @map('company_name') @db.VarChar(40)
+    contactName  String? @map('contact_name') @db.VarChar(30)
+    contactTitle String? @map('contact_title') @db.VarChar(30)
+    address      String? @db.VarChar(60)
+    city         String? @db.VarChar(15)
+    postalCode   String? @map('postal_code') @db.VarChar(10)
+    country      String? @db.VarChar(15)
+    orders       Order[]
+
+    @@map('customers')
+}
+
+model Employee {
+    id        Int     @id @map('employee_id') @db.SmallInt
+    lastName  String  @map('last_name') @db.VarChar(20)
+    firstName String  @map('first_name') @db.VarChar(10)
+    title     String? @db.VarChar(30)
+    region    String? @db.VarChar(15)
+    orders    Order[]
+
+    @@map('employees')
+}
+
+model OrderDetail {
+    orderId   Int     @map('order_id') @db.SmallInt
+    productId Int     @map('product_id') @db.SmallInt
+    unitPrice Float   @map('unit_price') @db.Real
+    quantity  Int     @db.SmallInt
+    discount  Float   @db.Real
+    order     Order   @relation(fields: [orderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+    product   Product @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+    @@id([orderId, productId])
+    @@map('order_details')
+}
+
+model Order {
+    id          Int           @id @map('order_id') @db.SmallInt
+    customerId  String?       @map('customer_id') @db.Char(100)
+    employeeId  Int?          @map('employee_id') @db.SmallInt
+    orderDate   DateTime?     @map('order_date') @db.Date
+    shippedDate DateTime?     @map('shipped_date') @db.Date
+    details     OrderDetail[]
+    customer    Customer?     @relation(fields: [customerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+    employee    Employee?     @relation(fields: [employeeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+    @@map('orders')
+}
+
+model Product {
+    id           Int           @id @map('product_id') @db.SmallInt
+    name         String        @map('product_name') @db.VarChar(40)
+    categoryId   Int?          @map('category_id') @db.SmallInt
+    unitPrice    Float?        @map('unit_price') @db.Real
+    orderDetails OrderDetail[]
+    category     Category?     @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+    @@map('products')
+}
